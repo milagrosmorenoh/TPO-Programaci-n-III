@@ -3,6 +3,7 @@ package busqueda;
 import mapas.Mapa;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collections;
 
 public class NodoBusqueda {
 
@@ -45,5 +46,17 @@ public class NodoBusqueda {
 
         this.objetivosPendientes = new HashSet<>(padre.objetivosPendientes);
         this.objetivosPendientes.remove(destino);
+    }
+
+    public String getEstacion() {
+        return estacion;
+    }
+
+    public double getTiempo() {
+        return tiempo;
+    }
+
+    public Set<String> getObjetivosPendientes() {
+        return Collections.unmodifiableSet(objetivosPendientes);
     }
 }
