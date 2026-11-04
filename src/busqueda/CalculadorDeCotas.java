@@ -26,7 +26,7 @@ public class CalculadorDeCotas {
         return distancia / mapa.getVMax();
     }
 
-    //Prim
+    // Prim estima el tiempo mínimo para conectar los objetivos pendientes
     private double costoMST(Set<String> pendientes) {
         // Caso Base: con cero o un objetivo, no hay aristas que sumar.
         if (pendientes.size() <= 1) {

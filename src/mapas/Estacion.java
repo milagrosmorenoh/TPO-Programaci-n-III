@@ -2,7 +2,7 @@ package mapas;
 
 public class Estacion {
 
-    private final int aula;
+    private final int aula; // Vale 0 si el lugar no es un aula
     private final double x;
     private final double y;
     private final boolean obligatorio;

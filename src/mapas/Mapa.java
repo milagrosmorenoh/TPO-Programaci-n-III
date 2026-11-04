@@ -37,7 +37,10 @@ public class Mapa {
                     continue;
                 }
 
-                String[] campos = linea.split(";");
+                String[] campos = linea.split(";", -1);
+                for (int i = 0; i < campos.length; i++) {
+                    campos[i] = campos[i].trim();
+                }
 
                 switch (campos[0]) {
                     case "LUGAR":
@@ -86,7 +89,7 @@ public class Mapa {
             }
         }
 
-        // 2. Conservar las conexiones cuyos dos extremos están habilitados
+        // 2. Conservar las conexiones con extremos habilitados y al menos un movimiento
         for (Conexion conexion : conexionesLeidas) {
             Estacion salida = mapa.estaciones.get(conexion.getDesde());
             Estacion destino = mapa.estaciones.get(conexion.getHasta());
@@ -95,7 +98,7 @@ public class Mapa {
                 throw new IOException("Estación desconocida en la conexión de " + conexion.getDesde() + " a " + conexion.getHasta());
             }
 
-            if (!salida.esProhibida() && !destino.esProhibida()) {  //si la salida y destino no estan prohibidos
+            if (!salida.esProhibida() && !destino.esProhibida() && !conexion.getMovimientosPermitidos().isEmpty()) {
                 mapa.conexionesHabilitadas.add(conexion);
             }
         }
@@ -106,8 +109,8 @@ public class Mapa {
         for (Conexion conexion : mapa.conexionesHabilitadas) {
             double tiempo = conexion.getTiempoCaminando();
 
-            if (tiempo <= 0 || !Double.isFinite(tiempo) || conexion.getMovimientosPermitidos().isEmpty()) {
-                throw new IOException("Tiempo o movimientos inválidos en la conexión de " + conexion.getDesde() + " a " + conexion.getHasta());
+            if (tiempo <= 0 || !Double.isFinite(tiempo)) {
+                throw new IOException("Tiempo inválido en la conexión de " + conexion.getDesde() + " a " + conexion.getHasta());
             }
 
             conexion.calcularDuraciones();

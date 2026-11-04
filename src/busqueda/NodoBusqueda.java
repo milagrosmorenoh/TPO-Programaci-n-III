@@ -15,6 +15,9 @@ public class NodoBusqueda {
     private final NodoBusqueda padre;
     private final Character movimiento;
     private final int nivel;
+    private int id;
+    private double cotaInferior;
+    private long ordenIngreso;
 
     // Constructor de la raíz: Uada todavía no hizo ningún movimiento.
     public NodoBusqueda(Mapa mapa) {
@@ -26,6 +29,7 @@ public class NodoBusqueda {
         this.visitados.add(this.estacion);
 
         this.objetivosPendientes = new HashSet<>(mapa.getObjetivosObligatorios());
+        this.objetivosPendientes.remove(this.estacion);
 
         this.padre = null;
         this.movimiento = null;
@@ -66,5 +70,41 @@ public class NodoBusqueda {
 
     public boolean yaVisito(String destino) {
         return visitados.contains(destino);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public double getCotaInferior() {
+        return cotaInferior;
+    }
+
+    public void setCotaInferior(double cotaInferior) {
+        this.cotaInferior = cotaInferior;
+    }
+
+    public long getOrdenIngreso() {
+        return ordenIngreso;
+    }
+
+    public void setOrdenIngreso(long ordenIngreso) {
+        this.ordenIngreso = ordenIngreso;
+    }
+
+    public NodoBusqueda getPadre() {
+        return padre;
+    }
+
+    public Character getMovimiento() {
+        return movimiento;
+    }
+
+    public int getNivel() {
+        return nivel;
     }
 }
