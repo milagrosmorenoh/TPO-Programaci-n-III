@@ -6,8 +6,7 @@ import mapas.Ventana;
 
 public class Buscador {
 
-    private ResultadoMovimiento evaluarMovimiento(
-            Mapa mapa, NodoBusqueda nodoActual, Conexion conexion, char movimiento) {
+    private ResultadoMovimiento evaluarMovimiento(Mapa mapa, NodoBusqueda nodoActual, Conexion conexion, char movimiento) {
 
         // Comprobar la conexión, su sentido y el movimiento elegido.
         if (!mapa.getConexionesHabilitadas().contains(conexion)) {
