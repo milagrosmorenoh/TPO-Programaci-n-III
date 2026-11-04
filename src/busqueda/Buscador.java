@@ -94,4 +94,47 @@ public class Buscador {
         }
         return suma;
     }
+
+    private NodoBusqueda buscarRutaInicial(Mapa mapa, NodoBusqueda primerHijo) {
+        NodoBusqueda nodoActual = primerHijo;
+
+        // Seguir mientras falte visitar algún objetivo o volver al origen.
+        while (!nodoActual.getObjetivosPendientes().isEmpty() || !nodoActual.getEstacion().equals(mapa.getOrigen())) {
+
+            NodoBusqueda mejorHijo = null;
+            double menorDuracion = Double.POSITIVE_INFINITY;
+
+            for (Conexion conexion : mapa.getConexionesHabilitadas()) {
+                // Solo se puede avanzar por conexiones que salen de esta estación.
+                if (!conexion.getDesde().equals(nodoActual.getEstacion())) {
+                    continue;
+                }
+
+                for (char movimiento : conexion.getMovimientosPermitidos().toCharArray()) {
+                    ResultadoMovimiento resultado = evaluarMovimiento(mapa, nodoActual, conexion, movimiento);
+
+                    NodoBusqueda hijo = resultado.getHijo();
+                    if (hijo == null) {
+                        continue;
+                    }
+
+                    double duracion = conexion.getDuracion(movimiento);
+                    if (duracion < menorDuracion) {
+                        menorDuracion = duracion;
+                        mejorHijo = hijo;
+                    }
+                }
+            }
+
+            // Si ningún movimiento fue válido, este intento quedó trabado.
+            if (mejorHijo == null) {
+                return null;
+            }
+
+            // Recién después de comparar todas las alternativas avanzamos un paso.
+            nodoActual = mejorHijo;
+        }
+
+        return nodoActual;
+    }
 }
