@@ -8,11 +8,11 @@ public class Estacion {
     private final boolean obligatorio;
     private final boolean prohibido;
 
-    public Estacion(int aula, double x, double y, boolean obligatorio, boolean prohibido) {
+    public Estacion(int aula, double x, double y, boolean oblig, boolean prohibido) {
         this.aula = aula;
         this.x = x;
         this.y = y;
-        this.obligatorio = obligatorio;
+        this.obligatorio = oblig;
         this.prohibido = prohibido;
     }
 
