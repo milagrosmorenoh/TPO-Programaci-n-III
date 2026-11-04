@@ -95,7 +95,7 @@ public class Mapa {
                 throw new IOException("Estación desconocida en la conexión de " + conexion.getDesde() + " a " + conexion.getHasta());
             }
 
-            if (!salida.esProhibida() && !destino.esProhibida()) {
+            if (!salida.esProhibida() && !destino.esProhibida()) {  //si la salida y destino no estan prohibidos
                 mapa.conexionesHabilitadas.add(conexion);
             }
         }
@@ -136,26 +136,32 @@ public class Mapa {
     }
 
     public Map<String, Estacion> getEstaciones() {
+
         return Collections.unmodifiableMap(estaciones);
     }
 
     public List<Conexion> getConexionesHabilitadas() {
+
         return Collections.unmodifiableList(conexionesHabilitadas);
     }
 
     public List<Ventana> getVentanas() {
+
         return Collections.unmodifiableList(ventanas);
     }
 
     public Set<String> getObjetivosObligatorios() {
+
         return Collections.unmodifiableSet(objetivosObligatorios);
     }
 
     public String getOrigen() {
+
         return origen;
     }
 
     public double getVMax() {
+
         return vMax;
     }
 }
