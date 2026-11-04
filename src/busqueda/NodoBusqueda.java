@@ -59,4 +59,12 @@ public class NodoBusqueda {
     public Set<String> getObjetivosPendientes() {
         return Collections.unmodifiableSet(objetivosPendientes);
     }
+
+    public double getBateria() {
+        return bateria;
+    }
+
+    public boolean yaVisito(String destino) {
+        return visitados.contains(destino);
+    }
 }
