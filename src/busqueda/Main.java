@@ -1,6 +1,7 @@
 package busqueda;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -44,5 +45,9 @@ public class Main {
 
         System.out.println("\nNodos analizados: " + resultado.getNodosAnalizados());
         System.out.println("Nodos expandidos: " + resultado.getNodosExpandidos());
+
+        Path archivoLog = Paths.get("log_ejecucion.txt");
+        Files.write(archivoLog, resultado.getRegistro());
+        System.out.println("\nLog guardado con éxito en el archivo: " + archivoLog.toAbsolutePath());
     }
 }
