@@ -3,6 +3,7 @@ package busqueda;
 import mapas.Conexion;
 import mapas.Mapa;
 import mapas.Ventana;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -49,12 +50,15 @@ public class Buscador {
             case 'C':
                 consumo = tiempoCaminando / 60.0;
                 break;
+
             case 'S':
                 consumo = 2.2 * (tiempoCaminando / 60.0);
                 break;
+
             case 'P':
                 consumo = 0.45 * (tiempoCaminando / 60.0);
                 break;
+
             default:
                 return new ResultadoMovimiento(null, "Movimiento desconocido");
         }
@@ -89,7 +93,6 @@ public class Buscador {
 
         // El paso es válido. El constructor del hijo actualiza sus conjuntos.
         NodoBusqueda hijo = new NodoBusqueda(nodoActual, destino, movimiento, tiempoLlegada, bateriaFinal);
-
         return new ResultadoMovimiento(hijo, null);
     }
 
@@ -99,10 +102,12 @@ public class Buscador {
             suma += numero % 10;
             numero = numero / 10;
         }
+
         return suma;
     }
 
     private NodoBusqueda buscarRutaInicial(Mapa mapa, NodoBusqueda primerHijo) {
+
         NodoBusqueda nodoActual = primerHijo;
 
         // Seguir mientras falte visitar algún objetivo o volver al origen.
@@ -118,14 +123,15 @@ public class Buscador {
                 }
 
                 for (char movimiento : conexion.getMovimientosPermitidos().toCharArray()) {
-                    ResultadoMovimiento resultado = evaluarMovimiento(mapa, nodoActual, conexion, movimiento);
 
+                    ResultadoMovimiento resultado = evaluarMovimiento(mapa, nodoActual, conexion, movimiento);
                     NodoBusqueda hijo = resultado.getHijo();
+
                     if (hijo == null) {
                         continue;
                     }
-
                     double duracion = conexion.getDuracion(movimiento);
+
                     if (duracion < menorDuracion) {
                         menorDuracion = duracion;
                         mejorHijo = hijo;
@@ -137,16 +143,19 @@ public class Buscador {
             if (mejorHijo == null) {
                 return null;
             }
-
-            // Recién después de comparar todas las alternativas avanzamos un paso.
             nodoActual = mejorHijo;
         }
 
         return nodoActual;
     }
 
-    public ResultadoMision resolverMision(Path archivo) throws IOException {
+    // Escribir cada registro para el archivo log
+    private void registrarEvento(BufferedWriter registro, String mensaje) throws IOException {
+        registro.write(mensaje);
+        registro.newLine();
+    }
 
+    public ResultadoMision resolverMision(Path archivo, BufferedWriter registro) throws IOException {
         // 1. Preparar el mapa y crear la raíz
         Mapa mapa = Mapa.prepararMapa(archivo);
         CalculadorDeCotas calculador = new CalculadorDeCotas(mapa);
@@ -159,19 +168,17 @@ public class Buscador {
         NodoBusqueda mejorParcial = null;
         double l3 = Double.POSITIVE_INFINITY;
 
-        List<String> registro = new ArrayList<>();
         int nodosAnalizados = 1;       // La raíz ya cuenta
         int nodosExpandidos = 0;
         long siguienteOrden = 0;
 
-        PriorityQueue<NodoBusqueda> cola = new PriorityQueue<>(
-                Comparator.comparingDouble(NodoBusqueda::getCotaInferior)
-                        .thenComparingLong(NodoBusqueda::getOrdenIngreso)
-        );
+        PriorityQueue<NodoBusqueda> cola = new PriorityQueue<>(Comparator.comparingDouble(NodoBusqueda::getCotaInferior).thenComparingLong(NodoBusqueda::getOrdenIngreso));
 
-        registro.add("Raíz 1: " + raiz.getEstacion());
+        registrarEvento(registro, "Raíz 1: " + raiz.getEstacion());
 
         // 3. Intentar rutas greedy desde los hijos válidos de la raíz
+        registrarEvento(registro, "GREEDY INICIAL");
+
         List<NodoBusqueda> primerosHijos = new ArrayList<>();
 
         for (Conexion conexion : mapa.getConexionesHabilitadas()) {
@@ -180,8 +187,7 @@ public class Buscador {
             }
 
             for (char movimiento : conexion.getMovimientosPermitidos().toCharArray()) {
-                ResultadoMovimiento paso =
-                        evaluarMovimiento(mapa, raiz, conexion, movimiento);
+                ResultadoMovimiento paso = evaluarMovimiento(mapa, raiz, conexion, movimiento);
 
                 if (paso.getHijo() != null) {
                     primerosHijos.add(paso.getHijo());
@@ -191,15 +197,15 @@ public class Buscador {
 
         // El tiempo de un primer hijo es la duración del primer paso.
         // En empates se conserva el orden en que se agregaron a la lista.
-        primerosHijos.sort(Comparator.comparingDouble(NodoBusqueda::getTiempo));
+        primerosHijos.sort(
+                Comparator.comparingDouble(NodoBusqueda::getTiempo));
 
         for (NodoBusqueda primerHijo : primerosHijos) {
             NodoBusqueda rutaInicial = buscarRutaInicial(mapa, primerHijo);
 
             if (rutaInicial != null) {
                 l3 = registrarRutaCompleta(rutaInicial, mejoresRutas);
-                registro.add("Solución greedy: tiempo=" + rutaInicial.getTiempo()
-                        + ", batería=" + rutaInicial.getBateria() + ", L3=" + l3);
+                registrarEvento(registro, "Solución greedy: tiempo=" + rutaInicial.getTiempo() + ", batería=" + rutaInicial.getBateria() + ", L3=" + l3);
             }
 
             if (mejoresRutas.size() == 3) {
@@ -208,18 +214,22 @@ public class Buscador {
         }
 
         // 4. Iniciar Branch and Bound desde la raíz
+        registrarEvento(registro, "BRANCH AND BOUND");
+
         raiz.setCotaInferior(calculador.calcularCotaInferior(raiz));
         raiz.setOrdenIngreso(siguienteOrden++);
         cola.add(raiz);
-        registro.add("Entra raíz a la cola: CI=" + raiz.getCotaInferior());
+
+        registrarEvento(registro, "Entra raíz a la cola: CI=" + raiz.getCotaInferior());
 
         while (!cola.isEmpty()) {
             NodoBusqueda actual = cola.poll();
-            registro.add("Sale de la cola el nodo " + actual.getId()
-                    + ": CI=" + actual.getCotaInferior() + ", L3=" + l3);
+
+            registrarEvento(registro,
+                    "Sale de la cola el nodo " + actual.getId() + ": CI=" + actual.getCotaInferior() + ", L3=" + l3);
 
             if (actual.getCotaInferior() > l3) {
-                registro.add("Fin: la menor CI de la cola supera L3.");
+                registrarEvento(registro, "Fin: la menor CI de la cola supera L3.");
                 break;
             }
 
@@ -231,29 +241,24 @@ public class Buscador {
                 }
 
                 for (char movimiento : conexion.getMovimientosPermitidos().toCharArray()) {
-                    ResultadoMovimiento paso =
-                            evaluarMovimiento(mapa, actual, conexion, movimiento);
 
+                    ResultadoMovimiento paso = evaluarMovimiento(mapa, actual, conexion, movimiento);
                     NodoBusqueda hijo = paso.getHijo();
 
                     if (hijo == null) {
-                        registro.add("Desde nodo " + actual.getId()
-                                + ", " + conexion.getDesde() + " -> " + conexion.getHasta()
-                                + " (" + movimiento + "): " + paso.getMotivo()
-                                + ". CI no calculada.");
+                        registrarEvento(registro, "Desde nodo " + actual.getId() + ", " + conexion.getDesde() + " -> " + conexion.getHasta() + " (" + movimiento + "): " + paso.getMotivo() + ". CI no calculada.");
                         continue;
                     }
-
                     nodosAnalizados++;
                     hijo.setId(nodosAnalizados);
 
-                    registro.add("Nodo " + hijo.getId() + ", padre=" + actual.getId() + ", nivel=" + hijo.getNivel() + ", " + actual.getEstacion() + " -> " + hijo.getEstacion() + " (" + movimiento + "), tiempo=" + hijo.getTiempo() + ", batería=" + hijo.getBateria() + ", L3=" + l3);
+                    registrarEvento(registro, "Nodo " + hijo.getId() + ", padre=" + actual.getId() + ", nivel=" + hijo.getNivel() + ", " + actual.getEstacion() + " -> " + hijo.getEstacion() + " (" + movimiento + ")" + ", tiempo=" + hijo.getTiempo() + ", batería=" + hijo.getBateria() + ", L3=" + l3);
 
                     // 5. Si completó la misión, registrar la ruta sin calcular el MST
-                    if (hijo.getEstacion().equals(mapa.getOrigen())
-                            && hijo.getObjetivosPendientes().isEmpty()) {
+                    if (hijo.getEstacion().equals(mapa.getOrigen()) && hijo.getObjetivosPendientes().isEmpty()) {
                         l3 = registrarRutaCompleta(hijo, mejoresRutas);
-                        registro.add("Solución completa en nodo " + hijo.getId() + ". Mejor tiempo=" + mejoresRutas.get(0).getTiempo() + ", L3=" + l3);
+
+                        registrarEvento(registro, "Solución completa en nodo " + hijo.getId() + ". Mejor tiempo=" + mejoresRutas.get(0).getTiempo() + ", L3=" + l3);
                         continue;
                     }
 
@@ -265,13 +270,14 @@ public class Buscador {
                     // 7. Aplicar los filtros baratos antes de calcular la cota completa
                     if (l3 != Double.POSITIVE_INFINITY) {
                         if (hijo.getTiempo() > l3) {
-                            registro.add("Poda nodo " + hijo.getId() + ": tiempo acumulado > L3. CI no calculada.");
+                            registrarEvento(registro, "Poda nodo " + hijo.getId() + ": tiempo acumulado > L3." + " CI no calculada.");
                             continue;
                         }
 
                         double cotaSimple = calculador.calcularCotaSimple(hijo);
+
                         if (cotaSimple > l3) {
-                            registro.add("Poda nodo " + hijo.getId() + ": cota simple=" + cotaSimple + " > L3. CI completa no calculada.");
+                            registrarEvento(registro, "Poda nodo " + hijo.getId() + ": cota simple=" + cotaSimple + " > L3." + " CI completa no calculada.");
                             continue;
                         }
                     }
@@ -281,13 +287,14 @@ public class Buscador {
                     hijo.setCotaInferior(ci);
 
                     if (ci > l3) {
-                        registro.add("Poda nodo " + hijo.getId() + ": CI=" + ci + " > L3.");
+                        registrarEvento(registro, "Poda nodo " + hijo.getId() + ": CI=" + ci + " > L3.");
                         continue;
                     }
 
                     hijo.setOrdenIngreso(siguienteOrden++);
                     cola.add(hijo);
-                    registro.add("Entra nodo " + hijo.getId() + " a la cola: CI=" + ci);
+
+                    registrarEvento(registro, "Entra nodo " + hijo.getId() + " a la cola: CI=" + ci);
                 }
             }
         }
@@ -303,18 +310,20 @@ public class Buscador {
         } else {
             if (mejorParcial == null) {
                 mejorParcial = raiz;
-                registro.add("No hubo ningún primer movimiento válido.");
+
+                registrarEvento(registro, "No hubo ningún primer movimiento válido.");
             }
+
             recorridos.add(reconstruirRuta(mejorParcial));
         }
 
-        return new ResultadoMision(misionCompleta, recorridos, registro, nodosAnalizados, nodosExpandidos);
+        return new ResultadoMision(misionCompleta, recorridos, nodosAnalizados, nodosExpandidos);
     }
 
     private double registrarRutaCompleta(NodoBusqueda nueva, List<NodoBusqueda> mejoresRutas) {
+
         // Menor tiempo primero. Si empatan, mayor batería final primero.
         Comparator<NodoBusqueda> porCalidad = Comparator.comparingDouble(NodoBusqueda::getTiempo).thenComparing(Comparator.comparingDouble(NodoBusqueda::getBateria).reversed());
-
         int posicionRepetida = -1;
 
         for (int i = 0; i < mejoresRutas.size(); i++) {
@@ -344,6 +353,7 @@ public class Buscador {
         if (mejoresRutas.size() == 3) {
             return mejoresRutas.get(2).getTiempo();
         }
+
         return Double.POSITIVE_INFINITY;
     }
 
@@ -359,6 +369,7 @@ public class Buscador {
     }
 
     private boolean esMejorParcial(NodoBusqueda candidato, NodoBusqueda mejor, Mapa mapa) {
+
         if (mejor == null) {
             return true;
         }
@@ -371,6 +382,7 @@ public class Buscador {
         }
 
         double distanciaCandidato = mapa.distanciaEnLineaRecta(candidato.getEstacion(), mapa.getOrigen());
+
         double distanciaMejor = mapa.distanciaEnLineaRecta(mejor.getEstacion(), mapa.getOrigen());
 
         return distanciaCandidato < distanciaMejor;
@@ -383,6 +395,7 @@ public class Buscador {
             ruta.add(fin);
             fin = fin.getPadre();
         }
+
         Collections.reverse(ruta);
         return ruta;
     }
