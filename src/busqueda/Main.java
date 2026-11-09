@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.ArrayList;
 
 public class Main {
 
@@ -50,8 +51,65 @@ public class Main {
         System.out.println("Nodos expandidos: " + resultado.getNodosExpandidos());
         System.out.println("Tiempo de ejecución práctico: " + (tiempoFin - tiempoInicio) + " ms");
 
+        List<String> logOrdenado = new ArrayList<>();
+
+
+        if (resultado.esMisionCompleta()) {
+            logOrdenado.add("Rutas completas distintas: " + resultado.getRecorridos().size());
+        } else {
+            logOrdenado.add("No se encontró una solución completa.");
+            logOrdenado.add("Se devuelve el mejor recorrido parcial.");
+        }
+
+        int puesto = 1;
+
+        for (List<NodoBusqueda> recorrido : resultado.getRecorridos()) {
+            NodoBusqueda ultimo = recorrido.get(recorrido.size() - 1);
+
+            logOrdenado.add("");
+            logOrdenado.add("Recorrido " + puesto);
+
+            for (NodoBusqueda nodo : recorrido) {
+                if (nodo.getPadre() == null) {
+                    logOrdenado.add("Salida: " + nodo.getEstacion());
+                } else {
+                    logOrdenado.add(String.format("%s -> %s (%s) | Tiempo acumulado: %.2f s" + " | Batería: %.2f", nodo.getPadre().getEstacion(), nodo.getEstacion(), nodo.getMovimiento(), nodo.getTiempo(), nodo.getBateria()));
+                }
+            }
+
+            logOrdenado.add(String.format("Tiempo total: %.2f s | Batería final: %.2f", ultimo.getTiempo(), ultimo.getBateria()));
+            puesto++;
+        }
+
+        logOrdenado.add("");
+        logOrdenado.add("=== SOLUCIONES DEL GREEDY INICIAL ===");
+
+        boolean huboSolucionGreedy = false;
+
+        for (String evento : resultado.getRegistro()) {
+            if (evento.startsWith("Solución greedy:")) {
+                logOrdenado.add(evento);
+                huboSolucionGreedy = true;
+            }
+        }
+
+        if (!huboSolucionGreedy) {
+            logOrdenado.add("Los intentos greedy no encontraron rutas completas.");
+        }
+
+        logOrdenado.add("");
+        logOrdenado.add("=== REGISTRO COMPLETO EN ORDEN DE EJECUCIÓN ===");
+
+        logOrdenado.addAll(resultado.getRegistro());
+
+        logOrdenado.add("");
+        logOrdenado.add("=== FIN DE LA EJECUCIÓN ===");
+        logOrdenado.add("Nodos analizados: " + resultado.getNodosAnalizados());
+        logOrdenado.add("Nodos expandidos: " + resultado.getNodosExpandidos());
+
         Path archivoLog = Paths.get("log_ejecucion.txt");
-        Files.write(archivoLog, resultado.getRegistro());
-        System.out.println("\nLog guardado con éxito en el archivo: " + archivoLog.toAbsolutePath());
+        Files.write(archivoLog, logOrdenado);
+
+        System.out.println("\nLog guardado correctamente.");
     }
 }
