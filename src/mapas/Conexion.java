@@ -42,7 +42,7 @@ public class Conexion {
 
     public double getMenorDuracion() {
         return Collections.min(duraciones.values());
-    }
+    } //guarda el tiempo del movimiento de menor duracion
 
     public double getDuracion(char movimiento) {
         return duraciones.get(movimiento);

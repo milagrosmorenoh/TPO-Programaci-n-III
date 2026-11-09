@@ -13,7 +13,10 @@ public class Main {
         Path archivo = Paths.get("datos", "mapa_grande.txt");
 
         Buscador buscador = new Buscador();
+
+        long tiempoInicio = System.currentTimeMillis();
         ResultadoMision resultado = buscador.resolverMision(archivo);
+        long tiempoFin = System.currentTimeMillis();
 
         if (resultado.esMisionCompleta()) {
             System.out.println("Rutas completas encontradas: "
@@ -45,6 +48,7 @@ public class Main {
 
         System.out.println("\nNodos analizados: " + resultado.getNodosAnalizados());
         System.out.println("Nodos expandidos: " + resultado.getNodosExpandidos());
+        System.out.println("Tiempo de ejecución práctico: " + (tiempoFin - tiempoInicio) + " ms");
 
         Path archivoLog = Paths.get("log_ejecucion.txt");
         Files.write(archivoLog, resultado.getRegistro());
