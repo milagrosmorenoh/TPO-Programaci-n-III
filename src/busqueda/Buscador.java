@@ -368,25 +368,29 @@ public class Buscador {
         return a == null && b == null;
     }
 
-    private boolean esMejorParcial(NodoBusqueda candidato, NodoBusqueda mejor, Mapa mapa) {
 
+    private boolean esMejorParcial(NodoBusqueda candidato, NodoBusqueda mejor, Mapa mapa) {
         if (mejor == null) {
             return true;
         }
 
-        int pendientesCandidato = candidato.getObjetivosPendientes().size();
-        int pendientesMejor = mejor.getObjetivosPendientes().size();
-
-        if (pendientesCandidato != pendientesMejor) {
-            return pendientesCandidato < pendientesMejor;
-        }
-
+        // Prioridad 1: estar más cerca del destino final.
         double distanciaCandidato = mapa.distanciaEnLineaRecta(candidato.getEstacion(), mapa.getOrigen());
 
         double distanciaMejor = mapa.distanciaEnLineaRecta(mejor.getEstacion(), mapa.getOrigen());
 
-        return distanciaCandidato < distanciaMejor;
+        if (distanciaCandidato != distanciaMejor) {
+            return distanciaCandidato < distanciaMejor;
+        }
+
+        // Prioridad 2: visitar más objetivos obligatorios.
+        int pendientesCandidato = candidato.getObjetivosPendientes().size();
+
+        int pendientesMejor = mejor.getObjetivosPendientes().size();
+
+        return pendientesCandidato < pendientesMejor;
     }
+
 
     private List<NodoBusqueda> reconstruirRuta(NodoBusqueda fin) {
         List<NodoBusqueda> ruta = new ArrayList<>();
