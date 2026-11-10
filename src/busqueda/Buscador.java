@@ -197,8 +197,7 @@ public class Buscador {
 
         // El tiempo de un primer hijo es la duración del primer paso.
         // En empates se conserva el orden en que se agregaron a la lista.
-        primerosHijos.sort(
-                Comparator.comparingDouble(NodoBusqueda::getTiempo));
+        primerosHijos.sort(Comparator.comparingDouble(NodoBusqueda::getTiempo));
 
         for (NodoBusqueda primerHijo : primerosHijos) {
             NodoBusqueda rutaInicial = buscarRutaInicial(mapa, primerHijo);
@@ -225,8 +224,7 @@ public class Buscador {
         while (!cola.isEmpty()) {
             NodoBusqueda actual = cola.poll();
 
-            registrarEvento(registro,
-                    "Sale de la cola el nodo " + actual.getId() + ": CI=" + actual.getCotaInferior() + ", L3=" + l3);
+            registrarEvento(registro, "Sale de la cola el nodo " + actual.getId() + ": CI=" + actual.getCotaInferior() + ", L3=" + l3);
 
             if (actual.getCotaInferior() > l3) {
                 registrarEvento(registro, "Fin: la menor CI de la cola supera L3.");
